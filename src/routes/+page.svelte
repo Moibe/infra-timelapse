@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { animate } from 'animejs';
 
+	type BoxType = 'project' | 'db';
+
 	interface Box {
 		id: number;
 		x: number;
@@ -8,6 +10,7 @@
 		w: number;
 		h: number;
 		nombre: string;
+		tipo: BoxType;
 	}
 
 	type Slot = 'left' | 'top' | 'right' | 'bottom';
@@ -43,11 +46,14 @@
 		if (snap.actionRefs) actionRefs = snap.actionRefs;
 	}
 
-	function createBox() {
+	function createBox(tipo: BoxType = 'project') {
 		saveSnapshot();
 		const id = nextId++;
 		const offset = (boxes.length % 5) * 30;
-		boxes.push({ id, x: 80 + offset, y: 80 + offset, w: 130, h: 125, nombre: '' });
+		const defaults = tipo === 'db'
+			? { w: 130, h: 130 }
+			: { w: 130, h: 125 };
+		boxes.push({ id, x: 80 + offset, y: 80 + offset, ...defaults, nombre: '', tipo });
 	}
 
 	// Box dragging
@@ -332,7 +338,7 @@
 			reader.onload = () => {
 				try {
 					const data = JSON.parse(reader.result as string);
-								boxes = (data.boxes ?? []).map((b: Record<string, unknown>) => ({ ...b, w: b.w ?? 130, h: b.h ?? 125, nombre: b.nombre ?? '' }));
+								boxes = (data.boxes ?? []).map((b: Record<string, unknown>) => ({ ...b, w: b.w ?? 130, h: b.h ?? 125, nombre: b.nombre ?? '', tipo: b.tipo ?? 'project' }));
 					connections = (data.connections ?? []).map((c: Record<string, unknown>) => ({ ...c, fromSlot: c.fromSlot ?? 'right', toSlot: c.toSlot ?? 'left', labels: Array.isArray(c.labels) ? c.labels : (c.label ? [c.label] : ['']) }));
 					nextId = data.nextId ?? 1;
 					if (Array.isArray(data.actionRefs) && data.actionRefs.length > 0) {
@@ -621,9 +627,20 @@
 	<button class="btn-io" onclick={importWorkflow} title="Importar workflow">⬆ Importar</button>
 </div>
 
-<button class="btn-create" onclick={createBox}>
-	<div class="btn-box"></div>
-</button>
+<div class="create-buttons">
+	<button class="btn-create" onclick={() => createBox('project')} title="Crear Proyecto">
+		<div class="btn-box">
+			<span class="btn-dots"><span class="bd r"></span><span class="bd y"></span><span class="bd g"></span></span>
+		</div>
+	</button>
+	<button class="btn-create" onclick={() => createBox('db')} title="Crear Base de Datos">
+		<div class="btn-cylinder">
+			<div class="bc-top"></div>
+			<div class="bc-body"></div>
+			<div class="bc-bottom"></div>
+		</div>
+	</button>
+</div>
 
 <div
 	class="workspace"
@@ -688,6 +705,8 @@
 	{#each boxes as box (box.id)}
 		<div
 			class="box"
+			class:box-project={box.tipo === 'project'}
+			class:box-db={box.tipo === 'db'}
 			class:dragging={draggingId === box.id}
 			class:selected={selectedIds.has(box.id)}
 			style="left: {box.x}px; top: {box.y}px; width: {box.w}px; height: {box.h}px; z-index: {box.id};"
@@ -697,12 +716,37 @@
 			onpointerup={() => onPointerUp(box)}
 			oncontextmenu={(e) => removeBox(e, box)}
 		>
-			<input
-				class="box-label"
-				type="text"
-				bind:value={box.nombre}
-				onpointerdown={(e) => e.stopPropagation()}
-			/>
+			{#if box.tipo === 'project'}
+				<div class="window-bar">
+					<span class="win-dot wd-r"></span>
+					<span class="win-dot wd-y"></span>
+					<span class="win-dot wd-g"></span>
+				</div>
+				<input
+					class="box-label label-project"
+					type="text"
+					bind:value={box.nombre}
+					onpointerdown={(e) => e.stopPropagation()}
+				/>
+			{:else if box.tipo === 'db'}
+				<div class="cyl-top"></div>
+				<div class="cyl-body">
+					<input
+						class="box-label label-db"
+						type="text"
+						bind:value={box.nombre}
+						onpointerdown={(e) => e.stopPropagation()}
+					/>
+				</div>
+				<div class="cyl-bottom"></div>
+			{:else}
+				<input
+					class="box-label"
+					type="text"
+					bind:value={box.nombre}
+					onpointerdown={(e) => e.stopPropagation()}
+				/>
+			{/if}
 			<span
 				class="dot dot-left"
 				bind:this={dotEls[`${box.id}-left`]}
@@ -878,10 +922,16 @@
 		color: white;
 	}
 
-	.btn-create {
+	.create-buttons {
 		position: fixed;
 		top: 4%;
 		left: 0.3%;
+		display: flex;
+		gap: 8px;
+		z-index: 20;
+	}
+
+	.btn-create {
 		padding: 6px 16px;
 		background: rgba(255, 255, 255, 0.12);
 		color: white;
@@ -892,7 +942,6 @@
 		cursor: pointer;
 		backdrop-filter: blur(8px);
 		transition: background 0.2s, border-color 0.2s;
-		z-index: 20;
 	}
 
 	.btn-create:hover {
@@ -1138,6 +1187,63 @@
 		height: 20px;
 		background: white;
 		border-radius: 4px;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.btn-dots {
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		display: flex;
+		gap: 2px;
+	}
+
+	.bd {
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+	}
+
+	.bd.r { background: #ff5f57; }
+	.bd.y { background: #febc2e; }
+	.bd.g { background: #28c840; }
+
+	.btn-cylinder {
+		width: 20px;
+		height: 22px;
+		position: relative;
+	}
+
+	.bc-top {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 20px;
+		height: 8px;
+		background: linear-gradient(180deg, #e8f0fe, white);
+		border-radius: 50%;
+		z-index: 2;
+	}
+
+	.bc-body {
+		position: absolute;
+		top: 4px;
+		left: 0;
+		width: 20px;
+		height: 14px;
+		background: linear-gradient(180deg, white, #f0f4ff);
+	}
+
+	.bc-bottom {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 20px;
+		height: 8px;
+		background: #f0f4ff;
+		border-radius: 50%;
+		z-index: 1;
 	}
 
 	.workspace {
@@ -1166,23 +1272,108 @@
 
 	.box {
 		position: absolute;
-		background: white;
-		border-radius: 12px;
 		cursor: grab;
 		user-select: none;
 		touch-action: none;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 	}
 
 	.box.dragging {
 		cursor: grabbing;
-		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 	}
 
 	.box.selected {
 		outline: 2px solid rgba(100, 149, 237, 0.8);
 		outline-offset: 2px;
 	}
+
+	/* === PROJECT (Window Title Bar) === */
+	.box.box-project {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+		overflow: hidden;
+	}
+
+	.box.box-project.dragging {
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+	}
+
+	.window-bar {
+		width: 100%;
+		height: 20px;
+		background: #f0f0f0;
+		border-radius: 12px 12px 0 0;
+		display: flex;
+		align-items: center;
+		padding-left: 8px;
+		gap: 4px;
+	}
+
+	.win-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+	}
+
+	.wd-r { background: #ff5f57; }
+	.wd-y { background: #febc2e; }
+	.wd-g { background: #28c840; }
+
+	.box.box-project .label-project {
+		top: 26px;
+	}
+
+	/* === DATABASE (Cilindro Tintado) === */
+	.box.box-db {
+		background: transparent;
+		border-radius: 0;
+		box-shadow: none;
+		overflow: visible;
+	}
+
+	.cyl-top {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 28%;
+		background: linear-gradient(180deg, #e8f0fe 0%, white 100%);
+		border-radius: 50%;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+		z-index: 2;
+	}
+
+	.cyl-body {
+		position: absolute;
+		top: 14%;
+		left: 0;
+		width: 100%;
+		height: 72%;
+		background: linear-gradient(180deg, white 0%, #f0f4ff 100%);
+		box-shadow: 4px 0 20px rgba(0,0,0,0.15), -4px 0 20px rgba(0,0,0,0.15);
+		overflow: hidden;
+	}
+
+	.label-db {
+		top: 30%;
+	}
+
+	.cyl-bottom {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: 28%;
+		background: #f0f4ff;
+		border-radius: 50%;
+		box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+		z-index: 1;
+	}
+
+	.box.box-db .dot-top { top: -4px; z-index: 3; }
+	.box.box-db .dot-bottom { bottom: -4px; z-index: 3; }
+	.box.box-db .dot-left { top: 55%; }
+	.box.box-db .dot-right { top: 55%; }
 
 	.lasso {
 		position: absolute;
