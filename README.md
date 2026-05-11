@@ -1,18 +1,17 @@
-# ⚡ Internodos UI
+# ⚡ infra-timelapse
 
-### La interfaz visual para conectar el mundo digital 🌐
 
-internodos UI es un editor visual de nodos construido con **Svelte** que permite diseñar interconexiones entre APIs, servicios y sistemas de manera intuitiva — arrastrando, soltando y conectando.
+**infra-timelapse** es un editor visual de nodos construido con **Svelte** que permite diseñar interconexiones entre APIs, servicios y sistemas de manera intuitiva — arrastrando, soltando y conectando.
 
 ---
 
 ## 🧩 ¿Qué es?
 
-En el mundo real, los sistemas no viven aislados. Tu base de datos habla con un servicio, ese servicio alimenta otro, y ese otro dispara una notificación. **internodos UI** nace de la idea de visualizar y orquestar esas conexiones de forma clara y elegante.
+En el mundo real, los sistemas no viven aislados. Tu base de datos habla con un servicio, ese servicio alimenta otro, y ese otro dispara una notificación. **infra-timelapse** sirve para representar visualmente las interconexiones de forma clara y elegante.
 
 Cada **nodo** representa un punto de información — una API, un servicio, un webhook, un proceso. Las **líneas** entre ellos representan el flujo de datos, la relación, la dependencia.
 
-![internodos UI - Nodos conectados](docs/screenshot.png)
+![infra-timelapse - Nodos conectados](docs/screenshot.png)
 
 ---
 
@@ -45,7 +44,7 @@ Cada **nodo** representa un punto de información — una API, un servicio, un w
 
 ```bash
 # Clonar el repo
-git clone https://github.com/moibe/internodos-ui.git
+git clone https://github.com/Moibe/infra-timelapse.git
 
 # Instalar dependencias
 npm install
@@ -58,7 +57,7 @@ npm run dev -- --open
 
 ## 🧠 La visión
 
-internodos UI no es solo un editor de nodos — es una forma de **pensar en sistemas**. Cada cuadro es una pieza del rompecabezas digital. Cada línea es un puente entre mundos.
+**infra-timelapse** no es solo un editor de nodos — es una forma de **pensar en sistemas**. Cada cuadro es una pieza del rompecabezas digital. Cada línea es un puente entre mundos.
 
 > 🔌 *Conecta lo que antes estaba separado.*
 
